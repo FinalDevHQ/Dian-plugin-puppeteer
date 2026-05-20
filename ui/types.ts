@@ -2,12 +2,13 @@
 export const API = "/plugins/puppeteer/api"
 
 // ── 页面标识 ──────────────────────────────────────────────────────────────────
-export type Page = "status" | "test" | "settings"
+export type Page = "status" | "test" | "settings" | "docs"
 
 export const PAGE_META: Record<Page, { title: string; desc: string }> = {
   status:   { title: "仪表盘",   desc: "查看浏览器状态和渲染统计" },
   test:     { title: "截图调试", desc: "测试 HTML 渲染效果" },
   settings: { title: "系统设置", desc: "插件配置与环境管理" },
+  docs:     { title: "接口文档", desc: "开发者调用参考" },
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
