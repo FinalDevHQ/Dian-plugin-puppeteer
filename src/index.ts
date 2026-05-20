@@ -272,6 +272,7 @@ export default class PuppeteerPlugin {
       pattern: /^#截图\s+.+$/i,
       description: "截取网页截图",
       category: "工具",
+      handler: (c: EventContext) => this.onScreenshot(c),
     });
 
     ctx.command({
@@ -279,6 +280,7 @@ export default class PuppeteerPlugin {
       pattern: /^#渲染\s+.+$/i,
       description: "渲染 HTML 并截图",
       category: "工具",
+      handler: (c: EventContext) => this.onRender(c),
     });
 
     ctx.command({
@@ -286,6 +288,7 @@ export default class PuppeteerPlugin {
       pattern: "#浏览器状态",
       description: "查看浏览器连接状态",
       category: "工具",
+      handler: (c: EventContext) => this.onBrowserStatus(c),
     });
 
     // ── Chrome 安装管理 API ─────────────────────────────
@@ -355,6 +358,6 @@ export default class PuppeteerPlugin {
     });
 
     // ── Web UI ───────────────────────────────────────────
-    ctx.ui({ staticDir: "./ui", entry: "index.html" });
+    ctx.ui({ staticDir: "./public", entry: "index.html" });
   }
 }

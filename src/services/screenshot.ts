@@ -111,7 +111,7 @@ export async function screenshot<
         html = renderTemplate(html, options.data);
       }
       await page.setContent(html, {
-        waitUntil: options.pageGotoParams?.waitUntil || 'networkidle0',
+        waitUntil: (options.pageGotoParams?.waitUntil || 'networkidle0') as any,
         timeout,
       });
       logDebug('HTML 内容已设置');
@@ -130,7 +130,7 @@ export async function screenshot<
             html = renderTemplate(html, options.data);
           }
           await page.setContent(html, {
-            waitUntil: options.pageGotoParams?.waitUntil || 'networkidle0',
+            waitUntil: (options.pageGotoParams?.waitUntil || 'networkidle0') as any,
             timeout,
           });
           logDebug('本地文件内容已设置');
