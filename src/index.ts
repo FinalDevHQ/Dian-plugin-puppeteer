@@ -1,3 +1,13 @@
+/**
+ * Dian Puppeteer 渲染服务插件
+ *
+ * 功能：
+ * - 提供 HTML/模板截图渲染 API
+ * - 支持 URL、本地文件、HTML 字符串渲染
+ * - 支持分页截图、自定义视口
+ * - 其他插件可通过 HTTP 路由调用
+ */
+
 import "reflect-metadata";
 import {
   Plugin,
@@ -6,143 +16,269 @@ import {
   type EventContext,
   type PluginSetupContext,
 } from "@myfinal/plugin-runtime";
-
-import { PKG_VERSION } from "./version.js";
-import { type Config, loadConfig, saveConfig } from "./config.js";
+import { loadConfig, saveConfig } from "./config.js";
+import { browserManager } from "./services/browser-manager.js";
+import { screenshot, renderHtml, screenshotUrl } from "./services/screenshot.js";
+import type { PluginConfig, ScreenshotOptions } from "./types.js";
 
 @Plugin({
-  name: "hello-world",
-  description: "Dian 插件模板 — Hello World",
-  version: PKG_VERSION,
-  author: "your-name",
-  icon: "👋",
+  name: "puppeteer",
+  description: "Puppeteer 渲染服务 - 提供 HTML/模板截图渲染 API",
+  version: "1.0.0",
+  author: "Dian",
+  icon: "🎨",
 })
-export default class PingPongPlugin {
-  /** 插件加载时间（服务端时间戳，毫秒） */
-  private readonly startTime = Date.now();
+export default class PuppeteerPlugin {
+  /** 运行时配置 */
+  private config: PluginConfig;
 
-  /** 运行时配置（可通过 Web UI 修改 reply，修改 command 需重启） */
-  private config = loadConfig();
-
-  /** 收到指令的累计次数 */
-  private pingCount = 0;
-
-  /** 最近触发记录（最多保留 50 条） */
-  private recentPings: Array<{
-    sender: string;
-    userId?: string;
-    group?: string;
-    platform?: string;
-    time: number;
-  }> = [];
-
-  // ── 事件处理器示例（@Handler，静态 pattern 匹配消息文本） ────────────────
-  // @Handler 接收 string（精确匹配）、RegExp 或返回它们的函数（动态 pattern）。
-  // 与 ctx.command() 的区别：pattern 在类加载时即确定，不支持运行时热更新；
-  // 若需要"改配置立即生效"的动态指令，请用 onSetup 里的 ctx.command()。
-  @Handler(/^#?help$/i)
-  async onHelp(ctx: EventContext): Promise<void> {
-    const uptime = Math.floor((Date.now() - this.startTime) / 1000);
-    await ctx.reply(
-      `📖 Hello World 插件\n` +
-      `触发词：${this.config.command}  →  ${this.config.reply}\n` +
-      `已运行：${uptime} 秒 | 累计触发：${this.pingCount} 次`
-    );
+  constructor() {
+    this.config = loadConfig();
   }
 
-  // ── 拦截器示例（最先执行，可用于日志、鉴权、过滤） ─────────────────────
-  @Interceptor(10)
-  async logInterceptor(ctx: EventContext): Promise<void> {
-    if (ctx.event.type === "message") {
-      console.log(
-        `[hello-world] <${ctx.event.platform}> ${ctx.event.payload.senderName ?? "?"}: ${ctx.event.payload.text ?? ""}`
-      );
+  // ── 消息 Handler：截图指令 ─────────────────────────────
+
+  @Handler(/^#截图\s+(.+)$/i)
+  async onScreenshot(ctx: EventContext): Promise<void> {
+    const text = ctx.event.payload.text ?? "";
+    const match = text.match(/^#截图\s+(.+)$/i);
+    if (!match) return;
+
+    const url = match[1].trim();
+    if (!url) {
+      await ctx.reply("请提供要截图的 URL");
+      return;
+    }
+
+    await ctx.reply("正在截图，请稍候...");
+
+    const result = await screenshot({
+      file: url,
+      file_type: 'auto',
+      encoding: 'base64',
+    });
+
+    if (result.status) {
+      // 发送图片（base64 格式）
+      await ctx.reply(`[CQ:image,base64=${result.data}]`);
+    } else {
+      await ctx.reply(`截图失败: ${result.message}`);
     }
   }
 
-  onSetup(ctx: PluginSetupContext): void {
-    // ── 注册指令（带分类，用于帮助菜单分组展示） ───────────────────────────
-    ctx.command({
-      name: this.config.command,
-      pattern: () => this.config.command,
-      description: `回复 "${this.config.reply}"`,
-      category: "趣味",  // 分类名，帮助菜单中按分类分组
-      handler: async (c: EventContext) => {
-        this.pingCount++;
-        this.recentPings.unshift({
-          sender: c.event.payload.senderName ?? "unknown",
-          userId: c.event.payload.userId,
-          group: c.event.payload.groupId,
-          platform: c.event.platform,
-          time: c.event.timestamp,
-        });
-        if (this.recentPings.length > 50) this.recentPings.pop();
+  // ── 消息 Handler：渲染 HTML ─────────────────────────────
 
-        console.log(
-          `[hello-world] ${c.event.payload.senderName ?? "?"} ` +
-          `→ "${this.config.reply}"`
-        );
-        await c.reply(this.config.reply);
-      },
-    });
+  @Handler(/^#渲染\s+([\s\S]+)$/i)
+  async onRender(ctx: EventContext): Promise<void> {
+    const text = ctx.event.payload.text ?? "";
+    const match = text.match(/^#渲染\s+([\s\S]+)$/i);
+    if (!match) return;
 
-    // ── sendAction 示例：调用底层 Bot API ───────────────────────────────────
-    // sendAction 用于调用底层平台 API（如 OneBot 的 send_group_msg、set_group_ban 等）。
-    // 这里注册一个 !mute 指令作为示例（需要 Bot 有管理员权限）。
-    ctx.command({
-      name: "mute",
-      pattern: () => this.config.muteCommand,
-      description: `禁言发送者 ${this.config.muteDuration} 秒（示例，需 Bot 有管理员权限）`,
-      category: "管理",
-      handler: async (c: EventContext) => {
-        if (!c.event.payload.groupId) {
-          await c.reply("此指令只能在群聊中使用");
-          return;
-        }
-        // 调用 OneBot API 执行禁言
-        const result = await c.sendAction("set_group_ban", {
-          group_id: Number(c.event.payload.groupId),
-          user_id: Number(c.event.payload.userId),
-          duration: this.config.muteDuration,
-        });
-        if (result.ok) {
-          await c.reply(`已禁言 ${this.config.muteDuration} 秒`);
-        } else {
-          await c.reply(`操作失败: ${result.message ?? "未知错误"}`);
-        }
-      },
-    });
+    const html = match[1].trim();
+    if (!html) {
+      await ctx.reply("请提供要渲染的 HTML 内容");
+      return;
+    }
 
-    // ── GET /plugins/hello-world/api/status ────────────────────────────────────
-    ctx.route("GET", "/status", (_req, reply) => {
+    const result = await renderHtml(html);
+
+    if (result.status) {
+      await ctx.reply(`[CQ:image,base64=${result.data}]`);
+    } else {
+      await ctx.reply(`渲染失败: ${result.message}`);
+    }
+  }
+
+  // ── 消息 Handler：浏览器状态 ─────────────────────────────
+
+  @Handler("#浏览器状态")
+  async onBrowserStatus(ctx: EventContext): Promise<void> {
+    const status = await browserManager.getStatus();
+    const lines = [
+      `🎨 Puppeteer 渲染服务`,
+      `━━━━━━━━━━━━━━━━━━`,
+      `连接状态: ${status.connected ? '✅ 已连接' : '❌ 未连接'}`,
+      `连接模式: ${status.mode === 'remote' ? '远程' : '本地'}`,
+      `浏览器版本: ${status.version || '未知'}`,
+      `当前页面数: ${status.pageCount}`,
+      `总渲染次数: ${status.totalRenders}`,
+      `失败次数: ${status.failedRenders}`,
+    ];
+
+    if (status.startTime) {
+      const uptime = Math.floor((Date.now() - status.startTime) / 1000);
+      const hours = Math.floor(uptime / 3600);
+      const minutes = Math.floor((uptime % 3600) / 60);
+      const seconds = uptime % 60;
+      lines.push(`运行时长: ${hours}小时${minutes}分钟${seconds}秒`);
+    }
+
+    await ctx.reply(lines.join('\n'));
+  }
+
+  // ── 拦截器：日志 ──────────────────────────────────────
+
+  @Interceptor(100)
+  async logInterceptor(ctx: EventContext): Promise<void> {
+    if (this.config.debug && ctx.event.type === 'message') {
+      console.log(`[puppeteer] ${ctx.event.payload.text}`);
+    }
+  }
+
+  // ── 生命周期：初始化 ──────────────────────────────────
+
+  async onSetup(ctx: PluginSetupContext): Promise<void> {
+    // 初始化浏览器
+    if (this.config.enabled) {
+      await browserManager.init(this.config.browser);
+    }
+
+    // ── HTTP API 路由 ────────────────────────────────────
+
+    // GET /plugins/puppeteer/api/status
+    ctx.route("GET", "/status", async (_req, reply) => {
+      const status = await browserManager.getStatus();
       reply.send({
-        startTime: this.startTime,
-        pingCount: this.pingCount,
-        config: this.config,
-        recentPings: this.recentPings.slice(0, 10),
+        code: 0,
+        data: {
+          enabled: this.config.enabled,
+          browser: status,
+        },
       });
     });
 
-    // ── POST /plugins/hello-world/api/config ───────────────────────────────────
-    ctx.route("POST", "/config", (req, reply) => {
-      const body = req.body as Partial<Config>;
-      if (typeof body.reply === "string" && body.reply.trim()) {
-        this.config.reply = body.reply.trim();
-      }
-      if (typeof body.command === "string" && body.command.trim()) {
-        this.config.command = body.command.trim();
-      }
-      if (typeof body.muteCommand === "string" && body.muteCommand.trim()) {
-        this.config.muteCommand = body.muteCommand.trim();
-      }
-      if (typeof body.muteDuration === "number" && body.muteDuration > 0) {
-        this.config.muteDuration = Math.floor(body.muteDuration);
-      }
-      saveConfig(this.config);
-      reply.send({ ok: true, config: this.config });
+    // GET /plugins/puppeteer/api/info
+    ctx.route("GET", "/info", (_req, reply) => {
+      reply.send({
+        code: 0,
+        data: {
+          name: "puppeteer",
+          version: "1.0.0",
+          description: "Puppeteer 渲染服务",
+        },
+      });
     });
 
-    // ── Web UI ───────────────────────────────────────────────────────────────
-    ctx.ui({ staticDir: "./public", entry: "index.html" });
+    // POST /plugins/puppeteer/api/screenshot
+    ctx.route("POST", "/screenshot", async (req, reply) => {
+      const body = req.body as ScreenshotOptions;
+
+      if (!body.file) {
+        reply.status(400).send({ code: -1, message: '缺少 file 参数' });
+        return;
+      }
+
+      const result = await screenshot(body);
+      reply.send({
+        code: result.status ? 0 : -1,
+        data: result.data,
+        time: result.time,
+        message: result.message,
+      });
+    });
+
+    // POST /plugins/puppeteer/api/render
+    ctx.route("POST", "/render", async (req, reply) => {
+      const body = req.body as { html: string; data?: Record<string, any> } & Partial<ScreenshotOptions>;
+
+      if (!body.html) {
+        reply.status(400).send({ code: -1, message: '缺少 html 参数' });
+        return;
+      }
+
+      const result = await renderHtml(body.html, {
+        data: body.data,
+        ...body,
+      });
+
+      reply.send({
+        code: result.status ? 0 : -1,
+        data: result.data,
+        time: result.time,
+        message: result.message,
+      });
+    });
+
+    // POST /plugins/puppeteer/api/browser/start
+    ctx.route("POST", "/browser/start", async (_req, reply) => {
+      const success = await browserManager.init(this.config.browser);
+      reply.send({
+        code: success ? 0 : -1,
+        message: success ? '浏览器已启动' : '启动浏览器失败',
+      });
+    });
+
+    // POST /plugins/puppeteer/api/browser/stop
+    ctx.route("POST", "/browser/stop", async (_req, reply) => {
+      await browserManager.close();
+      reply.send({
+        code: 0,
+        message: '浏览器已关闭',
+      });
+    });
+
+    // POST /plugins/puppeteer/api/browser/restart
+    ctx.route("POST", "/browser/restart", async (_req, reply) => {
+      const success = await browserManager.restart(this.config.browser);
+      reply.send({
+        code: success ? 0 : -1,
+        message: success ? '浏览器已重启' : '重启浏览器失败',
+      });
+    });
+
+    // GET /plugins/puppeteer/api/config
+    ctx.route("GET", "/config", (_req, reply) => {
+      reply.send({
+        code: 0,
+        data: this.config,
+      });
+    });
+
+    // POST /plugins/puppeteer/api/config
+    ctx.route("POST", "/config", async (req, reply) => {
+      const body = req.body as Partial<PluginConfig>;
+
+      // 合并配置
+      if (body.browser) {
+        this.config.browser = { ...this.config.browser, ...body.browser };
+        delete body.browser;
+      }
+      this.config = { ...this.config, ...body } as PluginConfig;
+
+      // 保存配置
+      saveConfig(this.config);
+
+      reply.send({
+        code: 0,
+        message: '配置已保存',
+        data: this.config,
+      });
+    });
+
+    // ── 命令注册（帮助菜单）──────────────────────────────
+
+    ctx.command({
+      name: "#截图",
+      pattern: /^#截图\s+.+$/i,
+      description: "截取网页截图",
+      category: "工具",
+    });
+
+    ctx.command({
+      name: "#渲染",
+      pattern: /^#渲染\s+.+$/i,
+      description: "渲染 HTML 并截图",
+      category: "工具",
+    });
+
+    ctx.command({
+      name: "#浏览器状态",
+      pattern: "#浏览器状态",
+      description: "查看浏览器连接状态",
+      category: "工具",
+    });
+
+    // ── Web UI ───────────────────────────────────────────
+    ctx.ui({ staticDir: "./ui", entry: "index.html" });
   }
 }
