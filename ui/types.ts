@@ -24,6 +24,13 @@ export interface BrowserStatus {
   startTime?: number
 }
 
+export interface BrowserProxyConfig {
+  server?: string
+  username?: string
+  password?: string
+  bypassList?: string
+}
+
 export interface PluginConfig {
   enabled: boolean
   debug: boolean
@@ -33,6 +40,7 @@ export interface PluginConfig {
     defaultViewportWidth: number
     defaultViewportHeight: number
     maxPages: number
+    proxy?: BrowserProxyConfig
   }
 }
 
