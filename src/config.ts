@@ -48,43 +48,7 @@ export const DEFAULTS: PluginConfig = {
   debug: false,
 };
 
-/**
- * 获取系统默认浏览器路径
- */
-export function getDefaultBrowserPaths(): string[] {
-  const platform = process.platform;
-
-  if (platform === 'win32') {
-    return [
-      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-      'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
-      'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
-      'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
-      process.env.LOCALAPPDATA + '\\Google\\Chrome\\Application\\chrome.exe',
-      process.env.LOCALAPPDATA + '\\Microsoft\\Edge\\Application\\msedge.exe',
-    ];
-  } else if (platform === 'darwin') {
-    return [
-      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-      '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
-      '/Applications/Chromium.app/Contents/MacOS/Chromium',
-    ];
-  } else {
-    // Linux / Docker
-    return [
-      '/usr/bin/google-chrome',
-      '/usr/bin/google-chrome-stable',
-      '/usr/bin/chromium',
-      '/usr/bin/chromium-browser',
-      '/usr/bin/microsoft-edge',
-      '/snap/bin/chromium',
-      '/opt/google/chrome/chrome',
-      '/opt/google/chrome/google-chrome',
-      '/headless-shell/headless-shell',
-      '/chrome/chrome',
-    ];
-  }
-}
+// 浏览器路径检测已移至 services/chrome-installer.ts
 
 /**
  * 类型守卫：判断是否为对象

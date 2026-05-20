@@ -8,7 +8,16 @@ import { platform } from 'node:os';
 import puppeteer from 'puppeteer-core';
 import type { Browser, Page } from 'puppeteer-core';
 import type { BrowserConfig, BrowserStatus } from '../types.js';
-import { getDefaultBrowserPaths, DEFAULT_BROWSER_CONFIG } from '../config.js';
+import { DEFAULT_BROWSER_CONFIG } from '../config.js';
+import {
+  getDefaultBrowserPaths,
+  installChrome,
+  isChromeInstalled,
+  getDefaultInstallPath,
+  getChromeExecutablePath,
+  isInstallingChrome,
+  getInstallProgress,
+} from './chrome-installer.js';
 
 /** 日志前缀 */
 const LOG_TAG = '[Puppeteer]';
@@ -59,6 +68,13 @@ class BrowserManager {
       return configPath;
     }
 
+    // 检查插件自动安装的 Chrome
+    const installedPath = getChromeExecutablePath(getDefaultInstallPath());
+    if (installedPath && existsSync(installedPath)) {
+      this.log('info', `检测到已安装的集成浏览器: ${installedPath}`);
+      return installedPath;
+    }
+
     // 自动检测系统浏览器
     const defaultPaths = getDefaultBrowserPaths();
     for (const browserPath of defaultPaths) {
@@ -69,6 +85,32 @@ class BrowserManager {
     }
 
     return undefined;
+  }
+
+  /**
+   * 自动下载安装 Chrome（找不到浏览器时调用）
+   */
+  async autoInstallChrome(): Promise<string | undefined> {
+    if (isInstallingChrome()) {
+      this.log('warn', '已有 Chrome 安装任务进行中');
+      return undefined;
+    }
+
+    this.log('info', '未检测到可用浏览器，正在自动下载 Chrome...');
+
+    const result = await installChrome({
+      onProgress: (p) => {
+        if (p.message) this.log('info', `[安装] ${p.message}`);
+      },
+    });
+
+    if (result.success && result.executablePath) {
+      this.log('info', `Chrome 自动安装完成: ${result.executablePath}`);
+      return result.executablePath;
+    } else {
+      this.log('error', `Chrome 自动安装失败: ${result.error}`);
+      return undefined;
+    }
   }
 
   /**
@@ -127,11 +169,15 @@ class BrowserManager {
       }
 
       // 本地浏览器启动
-      const executablePath = this.findBrowserPath(config.executablePath);
+      let executablePath = this.findBrowserPath(config.executablePath);
 
       if (!executablePath) {
-        this.log('error', '未找到可用的浏览器，请在配置中指定浏览器路径或远程浏览器地址(browserWSEndpoint)');
-        return false;
+        // 尝试自动安装 Chrome
+        executablePath = await this.autoInstallChrome();
+        if (!executablePath) {
+          this.log('error', '未找到可用的浏览器且自动安装失败，请在配置中指定浏览器路径或远程浏览器地址(browserWSEndpoint)');
+          return false;
+        }
       }
 
       this.log('info', `正在启动本地浏览器: ${executablePath}`);

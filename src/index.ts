@@ -19,6 +19,16 @@ import {
 import { loadConfig, saveConfig } from "./config.js";
 import { browserManager } from "./services/browser-manager.js";
 import { screenshot, renderHtml, screenshotUrl } from "./services/screenshot.js";
+import {
+  installChrome,
+  uninstallChrome,
+  getInstallProgress,
+  isInstallingChrome,
+  isChromeInstalled,
+  getInstalledChromeInfo,
+  getDefaultInstallPath,
+  DEFAULT_CHROME_VERSION,
+} from "./services/chrome-installer.js";
 import type { PluginConfig, ScreenshotOptions } from "./types.js";
 
 @Plugin({
@@ -276,6 +286,72 @@ export default class PuppeteerPlugin {
       pattern: "#浏览器状态",
       description: "查看浏览器连接状态",
       category: "工具",
+    });
+
+    // ── Chrome 安装管理 API ─────────────────────────────
+
+    // GET /plugins/puppeteer/api/chrome/status
+    ctx.route("GET", "/chrome/status", async (_req, reply) => {
+      const info = await getInstalledChromeInfo();
+      reply.send({
+        code: 0,
+        data: {
+          installed: info.installed,
+          executablePath: info.executablePath,
+          version: info.version,
+          installing: isInstallingChrome(),
+          progress: getInstallProgress(),
+          defaultVersion: DEFAULT_CHROME_VERSION,
+          installPath: getDefaultInstallPath(),
+        },
+      });
+    });
+
+    // POST /plugins/puppeteer/api/chrome/install
+    ctx.route("POST", "/chrome/install", async (req, reply) => {
+      if (isInstallingChrome()) {
+        reply.send({ code: -1, message: '已有安装任务正在进行中' });
+        return;
+      }
+
+      const body = req.body as { version?: string } || {};
+
+      // 异步安装，立即返回
+      installChrome({
+        version: body.version,
+        onProgress: (p) => {
+          console.log(`[ChromeInstaller] ${p.message}`);
+        },
+      }).then((result) => {
+        if (result.success) {
+          console.log(`[ChromeInstaller] 安装完成: ${result.executablePath}`);
+        } else {
+          console.error(`[ChromeInstaller] 安装失败: ${result.error}`);
+        }
+      });
+
+      reply.send({
+        code: 0,
+        message: 'Chrome 安装任务已启动，请通过 /chrome/status 查询进度',
+      });
+    });
+
+    // GET /plugins/puppeteer/api/chrome/progress
+    ctx.route("GET", "/chrome/progress", (_req, reply) => {
+      reply.send({
+        code: 0,
+        data: getInstallProgress(),
+        installing: isInstallingChrome(),
+      });
+    });
+
+    // POST /plugins/puppeteer/api/chrome/uninstall
+    ctx.route("POST", "/chrome/uninstall", async (_req, reply) => {
+      const result = await uninstallChrome();
+      reply.send({
+        code: result.success ? 0 : -1,
+        message: result.success ? 'Chrome 已卸载' : (result.error || '卸载失败'),
+      });
     });
 
     // ── Web UI ───────────────────────────────────────────
