@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Card, CardHeader, CardContent, Label, Input, Button } from "../components"
-import { API } from "../types"
+import { API, apiFetch } from "../types"
 import type { ToastType } from "../types"
 
 interface Props {
@@ -41,9 +41,8 @@ export function TestPage({ showToast }: Props) {
 
     try {
       const t0 = Date.now()
-      const res = await fetch(`${API}/screenshot`, {
+      const res = await apiFetch(`${API}/screenshot`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       })
       const data = await res.json()

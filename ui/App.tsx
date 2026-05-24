@@ -4,7 +4,7 @@ import { DashboardPage } from "./pages/DashboardPage"
 import { TestPage } from "./pages/TestPage"
 import { SettingsPage } from "./pages/SettingsPage"
 import { DocsPage } from "./pages/DocsPage"
-import { API, PAGE_META } from "./types"
+import { API, PAGE_META, apiFetch } from "./types"
 import type { Page } from "./types"
 
 // ── Nav items (keep SVG icons here alongside routing) ───────────────────────
@@ -64,7 +64,7 @@ export default function App() {
   useEffect(() => {
     const check = async () => {
       try {
-        const res = await fetch(`${API}/status`)
+        const res = await apiFetch(`${API}/status`)
         const data = await res.json()
         setConnected(data.code === 0 ? data.data.browser.connected : false)
       } catch {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { Card, CardHeader, CardContent, Label, Button } from "../components"
-import { API, fmtUptime } from "../types"
+import { API, apiFetch, fmtUptime } from "../types"
 import type { BrowserStatus, PluginConfig, ToastType } from "../types"
 
 interface Props {
@@ -25,7 +25,7 @@ export function DashboardPage({ showToast }: Props) {
 
   const fetchStatus = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/status`)
+      const res = await apiFetch(`${API}/status`)
       const data = await res.json()
       if (data.code === 0) setBrowser(data.data.browser)
     } catch { /* ignore */ }
@@ -33,7 +33,7 @@ export function DashboardPage({ showToast }: Props) {
 
   const fetchConfig = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/config`)
+      const res = await apiFetch(`${API}/config`)
       const data = await res.json()
       if (data.code === 0) setConfig(data.data)
     } catch { /* ignore */ }
@@ -57,7 +57,7 @@ export function DashboardPage({ showToast }: Props) {
     const labels = { start: "启动", stop: "停止", restart: "重启" }
     showToast(`正在${labels[action]}浏览器...`, "info")
     try {
-      const res = await fetch(`${API}/browser/${action}`, { method: "POST" })
+      const res = await apiFetch(`${API}/browser/${action}`, { method: "POST" })
       const data = await res.json()
       showToast(data.message || `${labels[action]}成功`, data.code === 0 ? "success" : "error")
       setTimeout(fetchStatus, 1000)

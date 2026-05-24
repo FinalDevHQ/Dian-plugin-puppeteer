@@ -11,7 +11,6 @@
 import "reflect-metadata";
 import {
   Plugin,
-  Handler,
   Interceptor,
   type EventContext,
   type PluginSetupContext,
@@ -48,7 +47,6 @@ export default class PuppeteerPlugin {
 
   // ── 消息 Handler：截图指令 ─────────────────────────────
 
-  @Handler(/^#截图\s+(.+)$/i)
   async onScreenshot(ctx: EventContext): Promise<void> {
     const text = ctx.event.payload.text ?? "";
     const match = text.match(/^#截图\s+(.+)$/i);
@@ -78,7 +76,6 @@ export default class PuppeteerPlugin {
 
   // ── 消息 Handler：渲染 HTML ─────────────────────────────
 
-  @Handler(/^#渲染\s+([\s\S]+)$/i)
   async onRender(ctx: EventContext): Promise<void> {
     const text = ctx.event.payload.text ?? "";
     const match = text.match(/^#渲染\s+([\s\S]+)$/i);
@@ -101,7 +98,6 @@ export default class PuppeteerPlugin {
 
   // ── 消息 Handler：浏览器状态 ─────────────────────────────
 
-  @Handler("#浏览器状态")
   async onBrowserStatus(ctx: EventContext): Promise<void> {
     const status = await browserManager.getStatus();
     const lines = [
@@ -265,30 +261,39 @@ export default class PuppeteerPlugin {
       });
     });
 
-    // ── 命令注册（帮助菜单）──────────────────────────────
+    // ── 命令注册（供 Dian-plugin-help 展示和框架路由）────────────────
 
     ctx.command({
-      name: "#截图",
-      pattern: /^#截图\s+.+$/i,
-      description: "截取网页截图",
+      name: "puppeteer",
+      description: "Puppeteer 渲染服务",
       category: "工具",
-      handler: (c: EventContext) => this.onScreenshot(c),
-    });
-
-    ctx.command({
-      name: "#渲染",
-      pattern: /^#渲染\s+.+$/i,
-      description: "渲染 HTML 并截图",
-      category: "工具",
-      handler: (c: EventContext) => this.onRender(c),
-    });
-
-    ctx.command({
-      name: "#浏览器状态",
-      pattern: "#浏览器状态",
-      description: "查看浏览器连接状态",
-      category: "工具",
-      handler: (c: EventContext) => this.onBrowserStatus(c),
+      order: 20,
+      children: [
+        {
+          name: "截图",
+          pattern: /^#截图\s+.+$/i,
+          description: "截取网页截图",
+          aliases: ["#截图"],
+          order: 10,
+          handler: (c: EventContext) => this.onScreenshot(c),
+        },
+        {
+          name: "渲染",
+          pattern: /^#渲染\s+.+$/i,
+          description: "渲染 HTML 并截图",
+          aliases: ["#渲染"],
+          order: 20,
+          handler: (c: EventContext) => this.onRender(c),
+        },
+        {
+          name: "浏览器状态",
+          pattern: "#浏览器状态",
+          description: "查看浏览器连接状态",
+          aliases: ["#浏览器状态"],
+          order: 30,
+          handler: (c: EventContext) => this.onBrowserStatus(c),
+        },
+      ],
     });
 
     // ── Chrome 安装管理 API ─────────────────────────────
@@ -359,5 +364,9 @@ export default class PuppeteerPlugin {
 
     // ── Web UI ───────────────────────────────────────────
     ctx.ui({ staticDir: "./public", entry: "index.html" });
+  }
+
+  async onStop(): Promise<void> {
+    await browserManager.close();
   }
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import { Card, CardHeader, CardContent, Label, Input, Button, Badge } from "../components"
-import { API } from "../types"
+import { API, apiFetch } from "../types"
 import type { ChromeStatus, PluginConfig, ToastType } from "../types"
 
 interface Props {
@@ -100,7 +100,7 @@ export function SettingsPage({ showToast }: Props) {
 
   const fetchConfig = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/config`)
+      const res = await apiFetch(`${API}/config`)
       const data = await res.json()
       if (data.code === 0) {
         const c: PluginConfig = data.data
@@ -119,7 +119,7 @@ export function SettingsPage({ showToast }: Props) {
 
   const fetchChrome = useCallback(async () => {
     try {
-      const res = await fetch(`${API}/chrome/status`)
+      const res = await apiFetch(`${API}/chrome/status`)
       const data = await res.json()
       if (data.code === 0) {
         setChrome(data.data as ChromeStatus)
@@ -140,9 +140,8 @@ export function SettingsPage({ showToast }: Props) {
   const saveConfig = async () => {
     setSaving(true)
     try {
-      const res = await fetch(`${API}/config`, {
+      const res = await apiFetch(`${API}/config`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           browser: {
             executablePath,
@@ -174,9 +173,8 @@ export function SettingsPage({ showToast }: Props) {
   const installChrome = async () => {
     showToast("正在启动 Chrome 安装任务...", "info")
     try {
-      const res = await fetch(`${API}/chrome/install`, {
+      const res = await apiFetch(`${API}/chrome/install`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: "{}",
       })
       const data = await res.json()
@@ -197,7 +195,7 @@ export function SettingsPage({ showToast }: Props) {
   const uninstallChrome = async () => {
     if (!confirm("确定要卸载集成 Chrome 吗？")) return
     try {
-      const res = await fetch(`${API}/chrome/uninstall`, { method: "POST" })
+      const res = await apiFetch(`${API}/chrome/uninstall`, { method: "POST" })
       const data = await res.json()
       showToast(data.message, data.code === 0 ? "success" : "error")
       setTimeout(fetchChrome, 500)
