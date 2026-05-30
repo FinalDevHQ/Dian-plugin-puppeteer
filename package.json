@@ -11,7 +11,7 @@
     "index-entry": "node scripts/index-entry.mjs"
   },
   "dependencies": {
-    "@myfinal/plugin-runtime": "^0.2.7",
+    "@myfinal/plugin-runtime": "^0.2.9",
     "@myfinal/shared": "^0.2.5",
     "puppeteer-core": "^24.4.0",
     "reflect-metadata": "^0.2.2"
