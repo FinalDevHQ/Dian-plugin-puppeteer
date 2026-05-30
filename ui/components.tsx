@@ -1,7 +1,11 @@
 import { type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode } from "react"
 
 export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-xl border bg-card text-card-foreground shadow-sm ${className}`}>{children}</div>
+  return (
+    <div className={`rounded-xl border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md ${className}`}>
+      {children}
+    </div>
+  )
 }
 
 export function CardHeader({ children, className = "" }: { children: ReactNode; className?: string }) {
@@ -14,7 +18,7 @@ export function CardContent({ children, className = "" }: { children: ReactNode;
 
 export function Label({ children, htmlFor, className = "" }: { children: ReactNode; htmlFor?: string; className?: string }) {
   return (
-    <label htmlFor={htmlFor} className={`text-[11px] font-medium uppercase tracking-wider text-muted-foreground ${className}`}>
+    <label htmlFor={htmlFor} className={`text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground ${className}`}>
       {children}
     </label>
   )
@@ -24,7 +28,7 @@ export function Input({ className = "", ...props }: InputHTMLAttributes<HTMLInpu
   return (
     <input
       {...props}
-      className={`flex h-9 w-full min-w-0 rounded-md border bg-input/30 px-3 py-1 text-sm shadow-xs outline-none transition-[color,box-shadow] placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+      className={`flex h-9 w-full min-w-0 rounded-lg border bg-background px-3 py-1 text-sm shadow-xs outline-none transition-all duration-150 placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/30 focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
     />
   )
 }
@@ -36,14 +40,14 @@ export function Button({
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant }) {
   const variants: Record<ButtonVariant, string> = {
-    default:   "bg-primary text-primary-foreground hover:bg-primary/90",
-    secondary: "bg-accent text-accent-foreground hover:bg-accent/80",
-    ghost:     "hover:bg-accent hover:text-accent-foreground",
+    default:   "bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/95 shadow-sm shadow-primary/10",
+    secondary: "bg-accent text-accent-foreground hover:bg-accent/80 active:bg-accent/70 border",
+    ghost:     "hover:bg-accent hover:text-accent-foreground active:bg-accent/80",
   }
   return (
     <button
       {...props}
-      className={`inline-flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-4 text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-50 ${variants[variant]} ${className}`}
+      className={`inline-flex h-9 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-4 text-sm font-medium transition-all duration-150 disabled:pointer-events-none disabled:opacity-50 ${variants[variant]} ${className}`}
     />
   )
 }
@@ -95,7 +99,7 @@ export function RegSection({
         <span className="text-[10px] tabular-nums text-muted-foreground">{count}</span>
       </div>
       {count === 0 ? (
-        <p className="rounded-md border border-dashed py-4 text-center text-[11px] text-muted-foreground">
+        <p className="rounded-lg border border-dashed py-4 text-center text-[11px] text-muted-foreground">
           {empty}
         </p>
       ) : (
@@ -107,11 +111,11 @@ export function RegSection({
 
 export function MethodBadge({ method }: { method: string }) {
   const cls: Record<string, string> = {
-    GET:    "border-emerald-600/40 bg-emerald-50 text-emerald-700",
-    POST:   "border-blue-600/40 bg-blue-50 text-blue-700",
-    PUT:    "border-amber-600/40 bg-amber-50 text-amber-700",
-    PATCH:  "border-violet-600/40 bg-violet-50 text-violet-700",
-    DELETE: "border-red-600/40 bg-red-50 text-red-700",
+    GET:    "border-emerald-600/30 bg-emerald-50 text-emerald-700",
+    POST:   "border-blue-600/30 bg-blue-50 text-blue-700",
+    PUT:    "border-amber-600/30 bg-amber-50 text-amber-700",
+    PATCH:  "border-violet-600/30 bg-violet-50 text-violet-700",
+    DELETE: "border-red-600/30 bg-red-50 text-red-700",
   }
   return (
     <Badge className={`shrink-0 font-mono ${cls[method] ?? ""}`}>

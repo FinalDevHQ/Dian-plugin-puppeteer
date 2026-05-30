@@ -11,7 +11,7 @@ interface Props {
 
 function IconChrome() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10" />
       <circle cx="12" cy="12" r="4" />
       <line x1="21.17" y1="8" x2="12" y2="8" />
@@ -23,7 +23,7 @@ function IconChrome() {
 
 function IconSettings() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
     </svg>
   )
@@ -31,7 +31,7 @@ function IconSettings() {
 
 function IconMonitor() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <rect x="2" y="3" width="20" height="14" rx="2" />
       <line x1="8" y1="21" x2="16" y2="21" />
       <line x1="12" y1="17" x2="12" y2="21" />
@@ -41,7 +41,7 @@ function IconMonitor() {
 
 function IconProxy() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10" />
       <line x1="2" y1="12" x2="22" y2="12" />
       <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
@@ -54,11 +54,11 @@ function IconProxy() {
 function SectionHeader({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
   return (
     <div className="flex items-start gap-3 px-5 pt-5 pb-3">
-      <div className="mt-0.5 w-7 h-7 rounded-md bg-muted flex items-center justify-center text-muted-foreground shrink-0">
+      <div className="mt-0.5 w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
         {icon}
       </div>
       <div>
-        <div className="text-sm font-semibold leading-tight">{title}</div>
+        <div className="text-sm font-semibold leading-tight tracking-tight">{title}</div>
         <div className="text-xs text-muted-foreground mt-0.5">{desc}</div>
       </div>
     </div>
@@ -210,9 +210,9 @@ export function SettingsPage({ showToast }: Props) {
 
   // Chrome 状态徽标
   const chromeBadge = isInstalling
-    ? <Badge className="border-amber-500/40 bg-amber-50 text-amber-700">安装中</Badge>
+    ? <Badge className="border-amber-500/30 bg-amber-50 text-amber-700">安装中</Badge>
     : chrome?.installed
-    ? <Badge className="border-emerald-500/40 bg-emerald-50 text-emerald-700">已安装</Badge>
+    ? <Badge className="border-emerald-500/30 bg-emerald-50 text-emerald-700">已安装</Badge>
     : <Badge className="border-border bg-muted/60 text-muted-foreground">未安装</Badge>
 
   return (
@@ -230,10 +230,9 @@ export function SettingsPage({ showToast }: Props) {
           {/* 状态行 */}
           <div className="flex items-center justify-between gap-4 rounded-lg border bg-muted/30 px-4 py-3">
             <div className="flex items-center gap-3 min-w-0">
-              {/* 状态指示点 */}
               <span className={`shrink-0 w-2 h-2 rounded-full ${
                 isInstalling ? "bg-amber-400 animate-pulse" :
-                chrome?.installed ? "bg-emerald-500" : "bg-muted-foreground/40"
+                chrome?.installed ? "bg-emerald-500" : "bg-muted-foreground/30"
               }`} />
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
@@ -270,7 +269,7 @@ export function SettingsPage({ showToast }: Props) {
           {/* 进度条 */}
           {showProgress && (
             <div className="mt-3 px-1">
-              <div className="w-full bg-border rounded-full h-1 overflow-hidden">
+              <div className="w-full bg-border/60 rounded-full h-1 overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-500 ${
                     progress?.status === "failed" ? "bg-destructive" :
@@ -331,9 +330,9 @@ export function SettingsPage({ showToast }: Props) {
           <CardContent className="pt-4">
             <div className="grid grid-cols-3 gap-4">
               {[
-                { label: "宽度",   hint: "px", value: width,    setter: setWidth },
-                { label: "高度",   hint: "px", value: height,   setter: setHeight },
-                { label: "并发页面", hint: "个", value: maxPages, setter: setMaxPages },
+                { label: "宽度",     hint: "px",  value: width,    setter: setWidth },
+                { label: "高度",     hint: "px",  value: height,   setter: setHeight },
+                { label: "并发页面", hint: "个",  value: maxPages, setter: setMaxPages },
               ].map(f => (
                 <Field key={f.label} label={f.label} hint={f.hint}>
                   <Input
@@ -350,7 +349,7 @@ export function SettingsPage({ showToast }: Props) {
         </Card>
       </div>
 
-      {/* ── 代理配置（独占一行，内容两列） ── */}
+      {/* ── 代理配置 ── */}
       <Card>
         <SectionHeader
           icon={<IconProxy />}
@@ -395,8 +394,8 @@ export function SettingsPage({ showToast }: Props) {
             </Field>
           </div>
           {proxyServer.trim() && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 text-xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-primary/5 border border-primary/20 text-primary text-xs">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
               代理已启用：所有页面请求将通过 <span className="font-mono font-medium">{proxyServer.trim()}</span> 转发
             </div>
           )}
@@ -404,7 +403,7 @@ export function SettingsPage({ showToast }: Props) {
       </Card>
 
       {/* ── 保存 ── */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 pb-2">
         <Button onClick={saveConfig} disabled={saving} className="px-6">
           {saving ? (
             <>

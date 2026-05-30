@@ -5,10 +5,10 @@ import { Badge } from "../components"
 
 function MethodBadge({ method }: { method: "GET" | "POST" }) {
   return (
-    <span className={`inline-flex items-center rounded px-2 py-0.5 text-[10px] font-bold tracking-wide border ${
+    <span className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-bold tracking-wide border ${
       method === "POST"
-        ? "bg-blue-50 text-blue-700 border-blue-300"
-        : "bg-emerald-50 text-emerald-700 border-emerald-300"
+        ? "bg-blue-50 text-blue-700 border-blue-200"
+        : "bg-emerald-50 text-emerald-700 border-emerald-200"
     }`}>
       {method}
     </span>
@@ -39,7 +39,7 @@ function CodeBlock({ code, lang = "js" }: { code: string; lang?: string }) {
     })
   }
   return (
-    <div className="relative rounded-lg overflow-hidden border bg-[#1e1e2e]">
+    <div className="relative rounded-xl overflow-hidden border bg-[#1e1e2e] shadow-sm">
       <div className="flex items-center justify-between px-4 py-2 bg-[#181825] border-b border-white/10">
         <span className="text-[10px] text-white/40 uppercase tracking-wider font-mono">{lang}</span>
         <button
@@ -70,7 +70,7 @@ function ParamTable({ title, params }: { title: string; params: Param[] }) {
   return (
     <div>
       <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">{title}</div>
-      <div className="rounded-lg border overflow-hidden">
+      <div className="rounded-xl border overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-muted/50 border-b">
@@ -119,7 +119,7 @@ interface EndpointDef {
 function EndpointCard({ ep }: { ep: EndpointDef }) {
   const [open, setOpen] = useState(false)
   return (
-    <div id={`ep-${ep.method.toLowerCase()}-${ep.path.replace(/\//g, "-").replace(/[{}]/g, "")}`} className="rounded-lg border overflow-hidden">
+    <div id={`ep-${ep.method.toLowerCase()}-${ep.path.replace(/\//g, "-").replace(/[{}]/g, "")}`} className="rounded-xl border overflow-hidden transition-shadow hover:shadow-sm">
       {/* 头部 - 始终可见 */}
       <button
         className="w-full flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors text-left"
@@ -132,14 +132,14 @@ function EndpointCard({ ep }: { ep: EndpointDef }) {
             {ep.tag}
           </span>
         )}
-        <span className="ml-2 text-xs text-muted-foreground">{ep.summary}</span>
-        <span className="ml-auto text-muted-foreground/50 text-xs">{open ? "▲" : "▼"}</span>
+        <span className="ml-2 text-xs text-muted-foreground hidden sm:inline">{ep.summary}</span>
+        <span className="ml-auto text-muted-foreground/40 text-xs shrink-0">{open ? "▲" : "▼"}</span>
       </button>
 
       {/* 展开内容 */}
       {open && (
         <div className="border-t px-4 py-4 flex flex-col gap-5 bg-muted/10">
-          {ep.desc && <p className="text-sm text-muted-foreground">{ep.desc}</p>}
+          {ep.desc && <p className="text-sm text-muted-foreground leading-relaxed">{ep.desc}</p>}
 
           {ep.requestParams && (
             <ParamTable title="Request Body (JSON)" params={ep.requestParams} />
@@ -148,7 +148,7 @@ function EndpointCard({ ep }: { ep: EndpointDef }) {
           {ep.responseDesc && (
             <div>
               <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Response</div>
-              <p className="text-xs text-muted-foreground">{ep.responseDesc}</p>
+              <p className="text-xs text-muted-foreground font-mono leading-relaxed">{ep.responseDesc}</p>
             </div>
           )}
 
@@ -206,6 +206,7 @@ const CONFIG_PARAMS: Param[] = [
 interface Section {
   id: string
   title: string
+  emoji: string
   endpoints: EndpointDef[]
 }
 
@@ -213,6 +214,7 @@ const SECTIONS: Section[] = [
   {
     id: "core",
     title: "核心服务",
+    emoji: "②",
     endpoints: [
       {
         method: "POST",
@@ -259,6 +261,7 @@ const SECTIONS: Section[] = [
   {
     id: "browser",
     title: "浏览器控制",
+    emoji: "③",
     endpoints: [
       {
         method: "POST",
@@ -292,6 +295,7 @@ const SECTIONS: Section[] = [
   {
     id: "config",
     title: "系统配置",
+    emoji: "④",
     endpoints: [
       {
         method: "GET",
@@ -353,6 +357,7 @@ const SECTIONS: Section[] = [
   {
     id: "chrome",
     title: "Chrome 管理",
+    emoji: "⑤",
     endpoints: [
       {
         method: "GET",
@@ -425,7 +430,7 @@ const result = await response.json();
 // ── 左侧目录 ──────────────────────────────────────────────────────────────────
 
 const TOC_ITEMS = [
-  { id: "start",   label: "START",   children: [{ id: "quick-start", label: "调用说明" }] },
+  { id: "start",   label: "快速开始", children: [{ id: "quick-start", label: "调用说明" }] },
   { id: "core",    label: "核心服务", children: SECTIONS[0].endpoints.map(e => ({ id: `ep-${e.method.toLowerCase()}-${e.path.replace(/\//g, "-").replace(/[{}]/g, "")}`, label: `${e.method} ${e.path}` })) },
   { id: "browser", label: "浏览器控制", children: SECTIONS[1].endpoints.map(e => ({ id: `ep-${e.method.toLowerCase()}-${e.path.replace(/\//g, "-").replace(/[{}]/g, "")}`, label: `${e.method} ${e.path}` })) },
   { id: "config",  label: "系统配置", children: SECTIONS[2].endpoints.map(e => ({ id: `ep-${e.method.toLowerCase()}-${e.path.replace(/\//g, "-").replace(/[{}]/g, "")}`, label: `${e.method} ${e.path}` })) },
@@ -445,17 +450,17 @@ export function DocsPage() {
     <div className="flex gap-6 mt-2" style={{ height: "calc(100vh - 120px)" }}>
 
       {/* ── 左侧目录 ── */}
-      <aside className="w-44 shrink-0 overflow-y-auto">
+      <aside className="w-44 shrink-0 overflow-y-auto scrollbar-thin">
         {TOC_ITEMS.map(group => (
-          <div key={group.id} className="mb-4">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 px-2 mb-1.5">
+          <div key={group.id} className="mb-5">
+            <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50 px-2.5 mb-1.5">
               {group.label}
             </div>
             {group.children.map(item => (
               <button
                 key={item.id}
                 onClick={() => { setActiveSection(item.id); scrollTo(item.id) }}
-                className={`w-full text-left px-2 py-1.5 rounded text-xs transition-colors font-mono ${
+                className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs transition-all duration-150 font-mono ${
                   activeSection === item.id
                     ? "bg-primary/10 text-primary font-medium"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -469,55 +474,55 @@ export function DocsPage() {
       </aside>
 
       {/* ── 右侧内容 ── */}
-      <div className="flex-1 overflow-y-auto flex flex-col gap-8 pr-2">
+      <div className="flex-1 overflow-y-auto flex flex-col gap-8 pr-2 scrollbar-thin">
 
         {/* 快速开始 */}
         <section id="quick-start" className="flex flex-col gap-4 scroll-mt-2">
           <div className="flex items-center gap-2">
-            <span className="text-base">⚡</span>
-            <h2 className="text-base font-bold">快速开始</h2>
+            <span className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-xs">⚡</span>
+            <h2 className="text-base font-bold tracking-tight">快速开始</h2>
           </div>
 
           {/* API 路径说明 */}
-          <div className="rounded-lg border p-4 flex flex-col gap-3">
+          <div className="rounded-xl border p-4 flex flex-col gap-3">
             <div className="text-sm font-semibold">API 路径说明</div>
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
-                <Badge className="bg-emerald-50 text-emerald-700 border-emerald-300 text-[10px] font-bold shrink-0">RECOMMENDED</Badge>
+                <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] font-bold shrink-0">RECOMMENDED</Badge>
                 <span className="text-xs text-muted-foreground">无认证 API（供其他插件调用）</span>
               </div>
-              <div className="rounded-md bg-muted/50 border px-3 py-2 font-mono text-xs">
+              <div className="rounded-lg bg-muted/50 border px-3 py-2 font-mono text-xs">
                 <span className="text-muted-foreground">{"{host}"}</span>
-                <span className="text-primary">/plugins/puppeteer/api/</span>
+                <span className="text-primary font-medium">/plugins/puppeteer/api/</span>
                 <span className="text-amber-600">{"{endpoint}"}</span>
               </div>
             </div>
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
-                <Badge className="bg-blue-50 text-blue-700 border-blue-300 text-[10px] font-bold shrink-0">WEBUI</Badge>
+                <Badge className="bg-blue-50 text-blue-700 border-blue-200 text-[10px] font-bold shrink-0">WEBUI</Badge>
                 <span className="text-xs text-muted-foreground">需认证 API（WebUI 管理界面）</span>
               </div>
-              <div className="rounded-md bg-muted/50 border px-3 py-2 font-mono text-xs">
+              <div className="rounded-lg bg-muted/50 border px-3 py-2 font-mono text-xs">
                 <span className="text-muted-foreground">{"{host}"}</span>
-                <span className="text-primary">/api/Plugin/ext/puppeteer/</span>
+                <span className="text-primary font-medium">/api/Plugin/ext/puppeteer/</span>
                 <span className="text-amber-600">{"{endpoint}"}</span>
               </div>
             </div>
           </div>
 
           {/* 调用示例 */}
-          <div className="rounded-lg border p-4 flex flex-col gap-3">
+          <div className="rounded-xl border p-4 flex flex-col gap-3">
             <div className="text-sm font-semibold">调用示例</div>
             <CodeBlock code={QUICK_START_CODE} lang="javascript" />
           </div>
         </section>
 
         {/* 各接口分组 */}
-        {SECTIONS.map((sec, si) => (
+        {SECTIONS.map(sec => (
           <section key={sec.id} className="flex flex-col gap-3 scroll-mt-2">
             <div className="flex items-center gap-2">
-              <span className="text-base">{["②", "③", "④", "⑤"][si]}</span>
-              <h2 className="text-base font-bold">{sec.title}</h2>
+              <span className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">{sec.emoji}</span>
+              <h2 className="text-base font-bold tracking-tight">{sec.title}</h2>
             </div>
             {sec.endpoints.map(ep => (
               <EndpointCard key={ep.path} ep={ep} />
