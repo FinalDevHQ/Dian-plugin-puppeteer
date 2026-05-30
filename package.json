@@ -1,5 +1,5 @@
 {
-  "name": "dian-plugin-puppeteer",
+  "name": "puppeteer",
   "version": "1.0.3",
   "description": "Dian Puppeteer 渲染服务插件 - 提供 HTML/模板截图渲染 API",
   "type": "module",
